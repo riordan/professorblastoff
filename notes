@@ -1,0 +1,15 @@
+# Notepad
+
+
+http://www.shervinemami.info/imageTransforms.html
+
+
+## Rotating image without clipping
+https://github.com/milq/cvrotate2D
+https://stackoverflow.com/questions/22041699/rotate-an-image-without-cropping-in-opencv-in-c
+If you wind up using vector rotation code w/o clipping, you'll have to rewrite it for CUDA kernels.
+
+You also need to do the same exact function for translating the point array so they match on the new image, as it'll have modified the canvas size.
+The cheaters way to do this is to run it again on the new image post rotation
+
+http://www.processing.org/tutorials/transform2d/
