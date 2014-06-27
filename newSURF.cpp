@@ -20,10 +20,12 @@
 #include <iostream>
 #include "opencv2/core/core.hpp"
 #include "opencv2/features2d/features2d.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/nonfree/features2d.hpp"
 #include <Magick++.h> 
+#include <math.h>
  
 using namespace Magick; 
 using namespace std;
@@ -126,8 +128,8 @@ int main( int argc, char** argv )
   line( img_matches, scene_corners[3] + offset, scene_corners[0] + offset, Scalar( 0, 255, 0), 4 );
 
   //-- Show detected matches
-//  imshow( "Good Matches & Object detection", img_matches );
-
+  //imshow( "Good Matches & Object detection", img_matches );
+  //waitKey(0);
 
   
 /** Beginning of ImageMagick
@@ -160,7 +162,7 @@ int main( int argc, char** argv )
     // Write the image to a file 
     image.write( "x.jpeg" ); 
 * End of ImageMagick */
-  //waitKey(0);
+
 
     // ROTATION TESTING
     std::cout << "Rotation Points:" << std::endl;
@@ -176,6 +178,53 @@ int main( int argc, char** argv )
     std::cout  << "Height:" <<  img_scene.size().height << std::endl;
 
 std::vector<Point2f> adjust_corners(4);
+
+// CONCEPTUAL SECTION BREAK
+// Now we create a copy of the Haystack, padded so we can rotate
+//   the entire image without losing any data to cropping.
+
+Mat img_PadHaystack;
+img_PadHaystack = img_scene;
+int oldWidth = img_scene.size().width;
+int oldHeight = img_scene.size().height;
+
+  //-- Show Haystack
+imshow( "Haystack", img_scene );
+waitKey(0);
+
+// Calculate the hypotenuse of Haystack (ceil everything to keep it int-y)
+int newWidth = (int)ceil(sqrt((oldWidth*oldWidth)+(oldHeight*oldHeight)));
+int newHeight = (int)ceil(sqrt((oldWidth*oldWidth)+(oldHeight*oldHeight)));
+std::cout << "New Haystack image attributes" << std::endl;
+std::cout << "New Width:" <<  newWidth << std::endl;
+std::cout  << "New Height:" <<  newHeight << std::endl;
+
+// Calculate how much padding you need
+int padWidth = (int)ceil( (newWidth - oldWidth)/2 );
+int padHeight = (int)ceil( ( newHeight - oldHeight) /2);
+std::cout << "New PADDINGHaystack image attributes" << std::endl;
+std::cout << "Padding Width:" <<  padWidth << std::endl;
+std::cout  << "Padding Height:" <<  padHeight << std::endl;
+
+copyMakeBorder(img_scene, img_PadHaystack, padHeight, padHeight, padWidth, padWidth, BORDER_CONSTANT);
+  //-- Show New Padded Haystack
+
+// draw the box because yeah!
+  line( img_PadHaystack, scene_corners[0] + (float)padWidth, scene_corners[1] + (float)padHeight, Scalar(0, 255, 0), 4 );
+  line( img_PadHaystack, scene_corners[1]+ (float)padWidth, scene_corners[2] + (float)padHeight, Scalar( 0, 255, 0), 4 );
+  line( img_PadHaystack, scene_corners[2]+ (float)padWidth, scene_corners[3] + (float)padHeight, Scalar( 0, 255, 0), 4 );
+  line( img_PadHaystack, scene_corners[3]+ (float)padWidth, scene_corners[0] + (float)padHeight, Scalar( 0, 255, 0), 4 );
+(float)
+
+imshow( "Padded Haystack", img_PadHaystack );
+waitKey(0);
+
+
+
+
+// Show detected matches
+ //imshow( "Show new rotated canvas", dest ); //old canvas because FUCK IT!
+ //waitKey(0);
 
 
 
