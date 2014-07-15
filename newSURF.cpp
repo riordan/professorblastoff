@@ -24,10 +24,10 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/nonfree/features2d.hpp"
-#include <Magick++.h> 
+//#include <Magick++.h> 
 #include <math.h>
  
-using namespace Magick; 
+//using namespace Magick; 
 using namespace std;
 using namespace cv;
 
@@ -44,6 +44,37 @@ int main( int argc, char** argv )
 
   Mat img_object = imread( argv[1], IMREAD_GRAYSCALE ); //Needle
   Mat img_scene = imread( argv[2], IMREAD_GRAYSCALE ); //Haystack
+
+
+// BEGIN STUPID RESIZE
+  int oldWidth = img_scene.size().width;
+int oldHeight = img_scene.size().height;
+
+  //-- Show Haystack
+imshow( "Haystack", img_scene );
+waitKey(0);
+
+// Calculate the hypotenuse of Haystack (ceil everything to keep it int-y)
+int newWidth = (int)ceil(sqrt((oldWidth*oldWidth)+(oldHeight*oldHeight)));
+int newHeight = (int)ceil(sqrt((oldWidth*oldWidth)+(oldHeight*oldHeight)));
+std::cout << "New Haystack image attributes" << std::endl;
+std::cout << "New Width:" <<  newWidth << std::endl;
+std::cout  << "New Height:" <<  newHeight << std::endl;
+
+// Calculate how much padding you need
+int padWidth = (int)ceil( (newWidth - oldWidth)/2 );
+int padHeight = (int)ceil( ( newHeight - oldHeight) /2);
+std::cout << "New PADDINGHaystack image attributes" << std::endl;
+std::cout << "Padding Width:" <<  padWidth << std::endl;
+std::cout  << "Padding Height:" <<  padHeight << std::endl;
+
+copyMakeBorder(img_scene, img_scene, padHeight, padHeight, padWidth, padWidth, BORDER_CONSTANT);
+
+//END STUPID RESIZE
+
+
+
+
 
   if( !img_object.data || !img_scene.data )
   { std::cout<< " --(!) Error reading images " << std::endl; return -1; }
@@ -109,12 +140,15 @@ int main( int argc, char** argv )
   }
 
   Mat H = findHomography( obj, scene, RANSAC );
+  std::cout<<"Homography Matrix:" << std::endl<< H <<std::endl;
 
   //-- Get the corners from the image_1 ( the object to be "detected" )
   std::vector<Point2f> obj_corners(4);
   obj_corners[0] = Point(0,0); obj_corners[1] = Point( img_object.cols, 0 );
   obj_corners[2] = Point( img_object.cols, img_object.rows ); obj_corners[3] = Point( 0, img_object.rows );
   std::vector<Point2f> scene_corners(4);
+
+
 
   perspectiveTransform( obj_corners, scene_corners, H);
 
@@ -179,6 +213,11 @@ int main( int argc, char** argv )
 
 std::vector<Point2f> adjust_corners(4);
 
+
+
+/*
+//BEGIN STUPID SECTION TO CALCULATE HYPOTENUSE FOR REAL
+
 // CONCEPTUAL SECTION BREAK
 // Now we create a copy of the Haystack, padded so we can rotate
 //   the entire image without losing any data to cropping.
@@ -191,6 +230,8 @@ int oldHeight = img_scene.size().height;
   //-- Show Haystack
 imshow( "Haystack", img_scene );
 waitKey(0);
+
+
 
 // Calculate the hypotenuse of Haystack (ceil everything to keep it int-y)
 int newWidth = (int)ceil(sqrt((oldWidth*oldWidth)+(oldHeight*oldHeight)));
@@ -209,17 +250,29 @@ std::cout  << "Padding Height:" <<  padHeight << std::endl;
 copyMakeBorder(img_scene, img_PadHaystack, padHeight, padHeight, padWidth, padWidth, BORDER_CONSTANT);
   //-- Show New Padded Haystack
 
+
+
+//YOU NEED TO ADD THE WIDTH & HEIGHT TO THE VECTORS, STUPID
+//What you SHOULD be doing is copying scene_corners, instead we'll manipulate it
+for( int i = 0; i < 4; i++ ){
+  scene_corners[i].x = scene_corners[i].x+padWidth;
+  scene_corners[i].y = scene_corners[i].y+padHeight;
+}
+
+
 // draw the box because yeah!
-  line( img_PadHaystack, scene_corners[0] + (float)padWidth, scene_corners[1] + (float)padHeight, Scalar(0, 255, 0), 4 );
-  line( img_PadHaystack, scene_corners[1]+ (float)padWidth, scene_corners[2] + (float)padHeight, Scalar( 0, 255, 0), 4 );
-  line( img_PadHaystack, scene_corners[2]+ (float)padWidth, scene_corners[3] + (float)padHeight, Scalar( 0, 255, 0), 4 );
-  line( img_PadHaystack, scene_corners[3]+ (float)padWidth, scene_corners[0] + (float)padHeight, Scalar( 0, 255, 0), 4 );
-(float)
+  line( img_PadHaystack, scene_corners[0], scene_corners[1], Scalar( 0, 255, 0), 4 );
+  line( img_PadHaystack, scene_corners[1], scene_corners[2], Scalar( 0, 255, 0), 4 );
+  line( img_PadHaystack, scene_corners[2], scene_corners[3], Scalar( 0, 255, 0), 4 );
+  line( img_PadHaystack, scene_corners[3], scene_corners[0], Scalar( 0, 255, 0), 4 );
+
 
 imshow( "Padded Haystack", img_PadHaystack );
 waitKey(0);
 
 
+//END STUPID REDO IT SECTION
+*/
 
 
 // Show detected matches
